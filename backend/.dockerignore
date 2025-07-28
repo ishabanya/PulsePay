@@ -15,7 +15,5 @@ dist
 README.md
 .eslintrc.js
 .prettierrc
-tsconfig.json
-src
 tests
 __tests__

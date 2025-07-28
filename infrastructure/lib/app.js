@@ -1,0 +1,30 @@
+#!/usr/bin/env node
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+require("source-map-support/register");
+const cdk = require("aws-cdk-lib");
+const payment_stack_1 = require("./payment-stack");
+const app = new cdk.App();
+const environment = app.node.tryGetContext('environment') || 'development';
+const account = process.env.CDK_DEFAULT_ACCOUNT;
+const region = process.env.CDK_DEFAULT_REGION || 'us-east-1';
+if (!account) {
+    throw new Error('CDK_DEFAULT_ACCOUNT environment variable is required');
+}
+const env = {
+    account,
+    region,
+};
+const stackName = `PaymentApp-${environment}`;
+new payment_stack_1.PaymentStack(app, stackName, {
+    env,
+    environment,
+    description: `Payment Processing Application - ${environment} environment`,
+    tags: {
+        Environment: environment,
+        Project: 'PaymentApp',
+        ManagedBy: 'CDK',
+    },
+});
+app.synth();
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiYXBwLmpzIiwic291cmNlUm9vdCI6IiIsInNvdXJjZXMiOlsiYXBwLnRzIl0sIm5hbWVzIjpbXSwibWFwcGluZ3MiOiI7OztBQUNBLHVDQUFxQztBQUNyQyxtQ0FBbUM7QUFDbkMsbURBQStDO0FBRS9DLE1BQU0sR0FBRyxHQUFHLElBQUksR0FBRyxDQUFDLEdBQUcsRUFBRSxDQUFDO0FBRTFCLE1BQU0sV0FBVyxHQUFHLEdBQUcsQ0FBQyxJQUFJLENBQUMsYUFBYSxDQUFDLGFBQWEsQ0FBQyxJQUFJLGFBQWEsQ0FBQztBQUMzRSxNQUFNLE9BQU8sR0FBRyxPQUFPLENBQUMsR0FBRyxDQUFDLG1CQUFtQixDQUFDO0FBQ2hELE1BQU0sTUFBTSxHQUFHLE9BQU8sQ0FBQyxHQUFHLENBQUMsa0JBQWtCLElBQUksV0FBVyxDQUFDO0FBRTdELElBQUksQ0FBQyxPQUFPLEVBQUUsQ0FBQztJQUNiLE1BQU0sSUFBSSxLQUFLLENBQUMsc0RBQXNELENBQUMsQ0FBQztBQUMxRSxDQUFDO0FBRUQsTUFBTSxHQUFHLEdBQUc7SUFDVixPQUFPO0lBQ1AsTUFBTTtDQUNQLENBQUM7QUFFRixNQUFNLFNBQVMsR0FBRyxjQUFjLFdBQVcsRUFBRSxDQUFDO0FBRTlDLElBQUksNEJBQVksQ0FBQyxHQUFHLEVBQUUsU0FBUyxFQUFFO0lBQy9CLEdBQUc7SUFDSCxXQUFXO0lBQ1gsV0FBVyxFQUFFLG9DQUFvQyxXQUFXLGNBQWM7SUFDMUUsSUFBSSxFQUFFO1FBQ0osV0FBVyxFQUFFLFdBQVc7UUFDeEIsT0FBTyxFQUFFLFlBQVk7UUFDckIsU0FBUyxFQUFFLEtBQUs7S0FDakI7Q0FDRixDQUFDLENBQUM7QUFFSCxHQUFHLENBQUMsS0FBSyxFQUFFLENBQUMiLCJzb3VyY2VzQ29udGVudCI6WyIjIS91c3IvYmluL2VudiBub2RlXG5pbXBvcnQgJ3NvdXJjZS1tYXAtc3VwcG9ydC9yZWdpc3Rlcic7XG5pbXBvcnQgKiBhcyBjZGsgZnJvbSAnYXdzLWNkay1saWInO1xuaW1wb3J0IHsgUGF5bWVudFN0YWNrIH0gZnJvbSAnLi9wYXltZW50LXN0YWNrJztcblxuY29uc3QgYXBwID0gbmV3IGNkay5BcHAoKTtcblxuY29uc3QgZW52aXJvbm1lbnQgPSBhcHAubm9kZS50cnlHZXRDb250ZXh0KCdlbnZpcm9ubWVudCcpIHx8ICdkZXZlbG9wbWVudCc7XG5jb25zdCBhY2NvdW50ID0gcHJvY2Vzcy5lbnYuQ0RLX0RFRkFVTFRfQUNDT1VOVDtcbmNvbnN0IHJlZ2lvbiA9IHByb2Nlc3MuZW52LkNES19ERUZBVUxUX1JFR0lPTiB8fCAndXMtZWFzdC0xJztcblxuaWYgKCFhY2NvdW50KSB7XG4gIHRocm93IG5ldyBFcnJvcignQ0RLX0RFRkFVTFRfQUNDT1VOVCBlbnZpcm9ubWVudCB2YXJpYWJsZSBpcyByZXF1aXJlZCcpO1xufVxuXG5jb25zdCBlbnYgPSB7XG4gIGFjY291bnQsXG4gIHJlZ2lvbixcbn07XG5cbmNvbnN0IHN0YWNrTmFtZSA9IGBQYXltZW50QXBwLSR7ZW52aXJvbm1lbnR9YDtcblxubmV3IFBheW1lbnRTdGFjayhhcHAsIHN0YWNrTmFtZSwge1xuICBlbnYsXG4gIGVudmlyb25tZW50LFxuICBkZXNjcmlwdGlvbjogYFBheW1lbnQgUHJvY2Vzc2luZyBBcHBsaWNhdGlvbiAtICR7ZW52aXJvbm1lbnR9IGVudmlyb25tZW50YCxcbiAgdGFnczoge1xuICAgIEVudmlyb25tZW50OiBlbnZpcm9ubWVudCxcbiAgICBQcm9qZWN0OiAnUGF5bWVudEFwcCcsXG4gICAgTWFuYWdlZEJ5OiAnQ0RLJyxcbiAgfSxcbn0pO1xuXG5hcHAuc3ludGgoKTsiXX0=

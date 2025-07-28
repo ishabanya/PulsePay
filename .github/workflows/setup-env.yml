@@ -1,0 +1,45 @@
+name: Setup Environment Variables
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 0 * * *'  # Daily at midnight
+
+jobs:
+  setup-env:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: us-east-1
+
+    - name: Get Stripe secrets
+      id: stripe-secrets
+      run: |
+        STRIPE_SECRET=$(aws secretsmanager get-secret-value --secret-id payment-app/stripe --query 'SecretString' --output text)
+        echo "STRIPE_SECRET_KEY=$(echo $STRIPE_SECRET | jq -r '.secretKey')" >> $GITHUB_ENV
+        echo "STRIPE_WEBHOOK_SECRET=$(echo $STRIPE_SECRET | jq -r '.webhookSecret')" >> $GITHUB_ENV
+
+    - name: Get Firebase secrets
+      id: firebase-secrets
+      run: |
+        FIREBASE_SECRET=$(aws secretsmanager get-secret-value --secret-id payment-app/firebase --query 'SecretString' --output text)
+        echo "FIREBASE_PROJECT_ID=$(echo $FIREBASE_SECRET | jq -r '.projectId')" >> $GITHUB_ENV
+        echo "FIREBASE_CLIENT_EMAIL=$(echo $FIREBASE_SECRET | jq -r '.clientEmail')" >> $GITHUB_ENV
+        echo "FIREBASE_PRIVATE_KEY=$(echo $FIREBASE_SECRET | jq -r '.privateKey')" >> $GITHUB_ENV
+
+    - name: Display environment variables (masked)
+      run: |
+        echo "Environment variables loaded:"
+        echo "STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:0:10}..."
+        echo "STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:0:10}..."
+        echo "FIREBASE_PROJECT_ID: $FIREBASE_PROJECT_ID"
+        echo "FIREBASE_CLIENT_EMAIL: $FIREBASE_CLIENT_EMAIL"
+        echo "FIREBASE_PRIVATE_KEY: ${FIREBASE_PRIVATE_KEY:0:30}..." 

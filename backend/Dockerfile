@@ -28,5 +28,5 @@ EXPOSE 5000
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD node -e "const http = require('http'); const options = { hostname: 'localhost', port: 5000, path: '/health', timeout: 2000 }; const req = http.request(options, (res) => { process.exit(res.statusCode === 200 ? 0 : 1); }); req.on('error', () => process.exit(1)); req.end();"
 
-# Start with ts-node, ignoring TypeScript errors
-CMD ["npx", "ts-node", "--transpile-only", "src/server.ts"]
+# Start with ts-node
+CMD ["npx", "ts-node", "src/server.ts"]

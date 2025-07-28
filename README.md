@@ -1,366 +1,238 @@
-# Payment Processing Application
+# 🚀 PulsePay - Payment Processing Application
 
-A complete, production-quality payment processing web application built with React, Node.js, Firebase, Stripe, and AWS infrastructure. This application showcases modern web development practices with beautiful UI/UX, robust backend architecture, and scalable cloud deployment.
+A modern payment processing application built with Node.js, Express, Stripe, and Firebase, deployed on AWS ECS.
 
-## 🏗️ Architecture Overview
+## 🌟 Features
 
-### Frontend (React + Vite)
-- **Framework**: React 18 with TypeScript
-- **Styling**: Tailwind CSS with custom design system
-- **Authentication**: Firebase Auth integration
-- **Payment Processing**: Stripe.js with Elements
-- **State Management**: React Context + Hooks
-- **Charts & Analytics**: Recharts for data visualization
-- **Animations**: Framer Motion for smooth interactions
+- **Payment Processing**: Secure payment handling with Stripe
+- **User Management**: Firebase Authentication and user data
+- **Real-time Webhooks**: Stripe webhook integration
+- **Scalable Architecture**: AWS ECS with load balancer
+- **CI/CD Pipeline**: Automated deployment via GitHub Actions
 
-### Backend (Node.js + Express)
-- **Runtime**: Node.js with TypeScript
-- **Framework**: Express.js with comprehensive middleware
-- **Database**: Firebase Firestore
-- **Authentication**: Firebase Admin SDK
-- **Payment Processing**: Stripe API integration
-- **Validation**: Joi for request validation
-- **Security**: Helmet, CORS, rate limiting
-- **Containerization**: Docker with multi-stage builds
+## 🏗️ Architecture
 
-### Infrastructure (AWS CDK)
-- **Frontend Hosting**: S3 + CloudFront CDN
-- **Backend Deployment**: ECS Fargate with Application Load Balancer
-- **Container Registry**: Amazon ECR
-- **Secrets Management**: AWS Secrets Manager
-- **Networking**: VPC with public/private subnets
-- **Auto Scaling**: ECS auto-scaling based on CPU utilization
-- **SSL/TLS**: Automatic HTTPS with CloudFront
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   Frontend      │    │   Load Balancer │    │   ECS Cluster   │
+│   (React/Vue)   │───▶│   (ALB)         │───▶│   (Backend)     │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+                                │                       │
+                                ▼                       ▼
+                       ┌─────────────────┐    ┌─────────────────┐
+                       │   Stripe API    │    │   Firebase      │
+                       │   (Payments)    │    │   (Auth/DB)     │
+                       └─────────────────┘    └─────────────────┘
+```
 
 ## 🚀 Quick Start
 
 ### Prerequisites
-- Node.js 18+ and npm
-- Docker and Docker Compose
+
+- Node.js 18+
+- Docker
 - AWS CLI configured
-- Firebase project with Firestore enabled
-- Stripe account with API keys
+- GitHub repository
 
-### 1. Clone and Setup
-```bash
-git clone <repository-url>
-cd payment
-```
+### Local Development
 
-### 2. Frontend Setup
-```bash
-cd frontend
-npm install
-cp .env.example .env
-# Edit .env with your Firebase and Stripe configuration
-npm run dev
-```
+1. **Clone the repository**
+   ```bash
+   git clone <your-repo-url>
+   cd payment
+   ```
 
-### 3. Backend Setup
-```bash
-cd backend
-npm install
-cp .env.example .env
-# Edit .env with your Firebase service account and Stripe keys
-npm run dev
-```
+2. **Set up environment variables**
+   ```bash
+   cd backend
+   ./create-env.sh  # Creates .env from AWS Secrets Manager
+   ```
 
-### 4. Infrastructure Setup
-```bash
-cd infrastructure
-npm install
-npm run build
-```
+3. **Install dependencies**
+   ```bash
+   npm install
+   ```
 
-## 📋 Environment Configuration
-
-### Frontend (.env)
-```env
-VITE_FIREBASE_API_KEY=your_firebase_api_key
-VITE_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
-VITE_FIREBASE_PROJECT_ID=your_firebase_project_id
-VITE_FIREBASE_STORAGE_BUCKET=your_project.appspot.com
-VITE_FIREBASE_MESSAGING_SENDER_ID=your_messaging_sender_id
-VITE_FIREBASE_APP_ID=your_firebase_app_id
-VITE_STRIPE_PUBLISHABLE_KEY=pk_test_your_stripe_publishable_key
-VITE_API_URL=http://localhost:5000/api
-```
-
-### Backend (.env)
-```env
-PORT=5000
-NODE_ENV=development
-FIREBASE_PROJECT_ID=your_firebase_project_id
-FIREBASE_CLIENT_EMAIL=your_service_account_email
-FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nyour_private_key\n-----END PRIVATE KEY-----\n"
-STRIPE_SECRET_KEY=sk_test_your_stripe_secret_key
-STRIPE_WEBHOOK_SECRET=whsec_your_webhook_secret
-ALLOWED_ORIGINS=http://localhost:3000,https://your-frontend-domain.com
-```
-
-## 🔧 Development
-
-### Running Locally
-```bash
-# Terminal 1 - Backend
-cd backend
-npm run dev
-
-# Terminal 2 - Frontend
-cd frontend
-npm run dev
-```
-
-### Building for Production
-```bash
-# Frontend
-cd frontend
-npm run build
-
-# Backend
-cd backend
-npm run build
-```
-
-### Running Tests
-```bash
-# Backend
-cd backend
-npm test
-
-# Frontend
-cd frontend
-npm test
-```
+4. **Start development server**
+   ```bash
+   npm run dev
+   ```
 
 ## 🐳 Docker Deployment
 
-### Build and Run Backend Container
+### Build and Push Image
 ```bash
 cd backend
-docker build -t payment-backend .
-docker run -p 5000:5000 --env-file .env payment-backend
+docker build --platform linux/amd64 -t payment-app-backend .
+docker tag payment-app-backend:latest 434676049739.dkr.ecr.us-east-1.amazonaws.com/payment-app-backend:latest
+docker push 434676049739.dkr.ecr.us-east-1.amazonaws.com/payment-app-backend:latest
 ```
 
-### Multi-Container Setup with Docker Compose
+### Deploy to ECS
 ```bash
-# Create docker-compose.yml in root directory
-docker-compose up -d
+aws ecs update-service --cluster payment-app-cluster --service PaymentApp-development-BackendService0012F2D2-oYgI1SrdmuQd --force-new-deployment
 ```
 
-## ☁️ AWS Deployment
+## 🔄 GitHub Actions Deployment
 
-### Prerequisites
-1. AWS CLI configured with appropriate permissions
-2. AWS CDK installed: `npm install -g aws-cdk`
-3. Bootstrap CDK: `npm run bootstrap`
+### Setup GitHub Secrets
 
-### 1. Update Secrets
-Before deploying, update the AWS Secrets Manager secrets with your actual credentials:
+1. Go to your GitHub repository
+2. Navigate to **Settings** → **Secrets and variables** → **Actions**
+3. Add the following secrets:
 
-```bash
-# Update Firebase secret
-aws secretsmanager update-secret \
-  --secret-id payment-app/firebase \
-  --secret-string '{
-    \"projectId\": \"your-firebase-project-id\",
-    \"clientEmail\": \"your-service-account@your-project.iam.gserviceaccount.com\",
-    \"privateKey\": \"-----BEGIN PRIVATE KEY-----\\nyour_private_key\\n-----END PRIVATE KEY-----\\n\"
-  }'
-
-# Update Stripe secret
-aws secretsmanager update-secret \
-  --secret-id payment-app/stripe \
-  --secret-string '{
-    \"secretKey\": \"sk_live_your_stripe_secret_key\",
-    \"webhookSecret\": \"whsec_your_webhook_secret\"
-  }'
+```
+AWS_ACCESS_KEY_ID=your_aws_access_key
+AWS_SECRET_ACCESS_KEY=your_aws_secret_key
 ```
 
-### 2. Build and Push Backend Image
-```bash
-# Get ECR repository URI from CDK output
-aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin <account-id>.dkr.ecr.us-east-1.amazonaws.com
+### Automatic Deployment
 
-# Build and tag image
+The application will automatically deploy when you:
+
+1. **Push to main/master branch**
+   ```bash
+   git add .
+   git commit -m "Update payment processing"
+   git push origin main
+   ```
+
+2. **Create a Pull Request**
+   - Tests will run automatically
+   - Deployment happens after merge
+
+### Manual Deployment
+
+You can also trigger deployment manually:
+
+1. Go to **Actions** tab in GitHub
+2. Select **Deploy PulsePay to AWS ECS**
+3. Click **Run workflow**
+
+## 📊 Application URLs
+
+- **Production API**: `http://Paymen-Backe-WgHaSH8uAK0D-961689159.us-east-1.elb.amazonaws.com`
+- **Health Check**: `http://Paymen-Backe-WgHaSH8uAK0D-961689159.us-east-1.elb.amazonaws.com/health`
+- **Stripe Webhook**: `http://Paymen-Backe-WgHaSH8uAK0D-961689159.us-east-1.elb.amazonaws.com/api/webhooks/stripe`
+
+## 🔐 Environment Variables
+
+The application uses AWS Secrets Manager for secure credential storage:
+
+- **Stripe Secret**: `payment-app/stripe`
+- **Firebase Secret**: `payment-app/firebase`
+
+### Local Development
+```bash
+# Export environment variables
+source ./get-secrets.sh
+
+# Or create .env file
+./create-env.sh
+```
+
+## 🧪 Testing
+
+### Run Tests
+```bash
 cd backend
-docker build -t payment-app-backend .
-docker tag payment-app-backend:latest <ecr-repository-uri>:latest
-
-# Push to ECR
-docker push <ecr-repository-uri>:latest
+npm test
 ```
 
-### 3. Deploy Infrastructure
+### Run Linting
 ```bash
-cd infrastructure
-npm run deploy
+npm run lint
 ```
 
-### 4. Deploy Frontend
+### Type Checking
 ```bash
-cd frontend
-npm run build
-
-# Upload to S3 bucket (replace with actual bucket name from CDK output)
-aws s3 sync dist/ s3://payment-app-frontend-<account-id>-<region>/ --delete
-
-# Invalidate CloudFront cache
-aws cloudfront create-invalidation \
-  --distribution-id <distribution-id> \
-  --paths \"/*\"
+npm run type-check
 ```
 
-### 5. Configure Stripe Webhook
-After deployment, configure your Stripe webhook endpoint:
-- URL: `https://<load-balancer-dns>/api/webhooks/stripe`
-- Events: `payment_intent.succeeded`, `payment_intent.payment_failed`, `payment_intent.canceled`
-
-## 📱 Features
-
-### Dashboard
-- Real-time payment analytics
-- Revenue charts and trends
-- Transaction overview
-- Success rate metrics
-
-### Payment Processing
-- Secure Stripe integration
-- Multiple currency support
-- Real-time payment status updates
-- Comprehensive error handling
-
-### Customer Management
-- Customer profiles and history
-- Transaction tracking per customer
-- Automated customer aggregation
-
-### Security
-- Firebase Authentication
-- JWT token validation
-- Rate limiting and CORS protection
-- Secure API endpoints
-- AWS Secrets Manager for credentials
-
-### Monitoring & Observability
-- Health check endpoints
-- CloudWatch logging
-- ECS service monitoring
-- Auto-scaling capabilities
-
-## 🔍 API Endpoints
-
-### Authentication
-All API endpoints require Firebase JWT token in the Authorization header:
-```
-Authorization: Bearer <firebase-jwt-token>
-```
-
-### Payment Endpoints
-- `POST /api/payments/create-payment-intent` - Create new payment
-- `POST /api/payments/confirm` - Confirm payment
-- `GET /api/payments/transactions` - Get all transactions
-- `GET /api/payments/stats` - Get dashboard statistics
-
-### Customer Endpoints
-- `GET /api/customers` - Get all customers
-- `GET /api/customers/:id` - Get customer by ID
-- `GET /api/customers/:id/transactions` - Get customer transactions
-
-### Webhook Endpoints
-- `POST /api/webhooks/stripe` - Stripe webhook handler
-
-## 🛠️ Technology Stack
-
-| Layer | Technology | Purpose |
-|-------|------------|---------|
-| Frontend | React 18 + TypeScript | UI Framework |
-| Styling | Tailwind CSS | Utility-first CSS |
-| State Management | React Context + Hooks | Application state |
-| Routing | React Router v6 | Client-side routing |
-| Charts | Recharts | Data visualization |
-| Animations | Framer Motion | Smooth animations |
-| Authentication | Firebase Auth | User authentication |
-| Backend | Node.js + Express | Server framework |
-| Database | Firebase Firestore | NoSQL database |
-| Payments | Stripe API | Payment processing |
-| Validation | Joi | Request validation |
-| Container | Docker | Containerization |
-| Cloud | AWS (S3, CloudFront, ECS, ALB) | Infrastructure |
-| IaC | AWS CDK | Infrastructure as Code |
-| Secrets | AWS Secrets Manager | Secure credential storage |
-
-## 📦 Project Structure
+## 📁 Project Structure
 
 ```
 payment/
-├── frontend/                 # React application
+├── .github/
+│   └── workflows/
+│       ├── deploy.yml      # Production deployment
+│       └── test.yml        # Testing workflow
+├── backend/
 │   ├── src/
-│   │   ├── components/      # Reusable UI components
-│   │   ├── pages/           # Page components
-│   │   ├── hooks/           # Custom React hooks
-│   │   ├── utils/           # Utility functions
-│   │   ├── types/           # TypeScript definitions
-│   │   └── contexts/        # React contexts
-│   ├── public/              # Static assets
-│   └── package.json
-├── backend/                  # Node.js API
-│   ├── src/
-│   │   ├── controllers/     # Request handlers
-│   │   ├── services/        # Business logic
-│   │   ├── routes/          # API routes
-│   │   ├── middleware/      # Express middleware
-│   │   ├── config/          # Configuration
-│   │   └── types/           # TypeScript definitions
-│   ├── Dockerfile           # Container definition
-│   └── package.json
-└── infrastructure/           # AWS CDK
-    ├── lib/
-    │   ├── constructs/      # CDK constructs
-    │   └── payment-stack.ts # Main stack
-    ├── cdk.json             # CDK configuration
-    └── package.json
+│   │   ├── controllers/    # Route controllers
+│   │   ├── services/       # Business logic
+│   │   ├── routes/         # API routes
+│   │   ├── middleware/     # Custom middleware
+│   │   └── config/         # Configuration files
+│   ├── Dockerfile          # Docker configuration
+│   ├── package.json        # Dependencies
+│   └── tsconfig.json       # TypeScript config
+├── frontend/               # Frontend application
+└── README.md              # This file
 ```
 
-## 🔒 Security Considerations
+## 🔧 Configuration
 
-1. **Authentication**: Firebase Auth with JWT tokens
-2. **Authorization**: Route-level protection
-3. **API Security**: Rate limiting, CORS, Helmet.js
-4. **Data Validation**: Joi schema validation
-5. **Secrets Management**: AWS Secrets Manager
-6. **HTTPS**: Enforced across all endpoints
-7. **Container Security**: Non-root user, minimal base image
-8. **Network Security**: VPC with private subnets
+### AWS Resources
+- **ECS Cluster**: `payment-app-cluster`
+- **ECR Repository**: `payment-app-backend`
+- **Load Balancer**: `Paymen-Backe-WgHaSH8uAK0D-961689159.us-east-1.elb.amazonaws.com`
+- **Secrets Manager**: `payment-app/stripe`, `payment-app/firebase`
 
-## 📈 Monitoring & Scaling
+### GitHub Actions
+- **Trigger**: Push to main/master or PR
+- **Build**: Docker image with TypeScript
+- **Deploy**: AWS ECS with rolling updates
+- **Health Check**: Automatic service validation
 
-- **Health Checks**: Application and container health monitoring
-- **Auto Scaling**: ECS auto-scaling based on CPU utilization
-- **Logging**: Centralized logging with CloudWatch
-- **Metrics**: Built-in ECS and ALB metrics
-- **Alerts**: CloudWatch alarms for critical metrics
+## 🚨 Troubleshooting
+
+### Common Issues
+
+1. **Environment Variables Missing**
+   ```bash
+   ./create-env.sh  # Create .env file
+   ```
+
+2. **Docker Build Fails**
+   ```bash
+   docker build --platform linux/amd64 -t payment-app-backend .
+   ```
+
+3. **ECS Service Not Starting**
+   ```bash
+   aws ecs describe-services --cluster payment-app-cluster --services PaymentApp-development-BackendService0012F2D2-oYgI1SrdmuQd
+   ```
+
+4. **GitHub Actions Fails**
+   - Check AWS credentials in GitHub secrets
+   - Verify ECS service name and cluster
+   - Ensure ECR repository exists
+
+### Logs and Monitoring
+
+- **ECS Logs**: CloudWatch `/ecs/payment-app-backend`
+- **Application Logs**: Container logs in ECS
+- **Load Balancer**: ALB access logs
+
+## 📈 Monitoring
+
+- **Health Checks**: Automatic health monitoring
+- **CloudWatch**: Application and infrastructure metrics
+- **ECS Service**: Service status and task health
 
 ## 🤝 Contributing
 
 1. Fork the repository
 2. Create a feature branch
 3. Make your changes
-4. Add tests if applicable
+4. Run tests: `npm test`
 5. Submit a pull request
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## 🆘 Support
-
-For questions, issues, or contributions, please:
-1. Check the documentation
-2. Search existing issues
-3. Create a new issue with detailed information
-4. Join our community discussions
+MIT License - see LICENSE file for details
 
 ---
 
-Built with ❤️ using modern web technologies and cloud-native architecture.
+**PulsePay** - Modern payment processing made simple! 💳✨

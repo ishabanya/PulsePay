@@ -4,6 +4,7 @@ import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import * as ecr from 'aws-cdk-lib/aws-ecr';
 import * as logs from 'aws-cdk-lib/aws-logs';
 import * as secretsmanager from 'aws-cdk-lib/aws-secretsmanager';
+import * as elbv2 from 'aws-cdk-lib/aws-elasticloadbalancingv2';
 import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 
@@ -84,17 +85,14 @@ export class Backend extends Construct {
       taskDefinition,
       publicLoadBalancer: true,
       desiredCount: 2,
-      listenerPort: 443,
-      protocol: ecsPatterns.ApplicationProtocol.HTTPS,
-      redirectHTTP: true,
-      domainName: 'api.payment-app.com',
-      enableLogging: true,
+      listenerPort: 80,
+      protocol: elbv2.ApplicationProtocol.HTTP,
       healthCheckGracePeriod: cdk.Duration.seconds(60),
     });
 
     this.service.targetGroup.configureHealthCheck({
       path: '/health',
-      protocol: ecs.Protocol.TCP,
+      protocol: elbv2.Protocol.HTTP,
       healthyHttpCodes: '200',
       interval: cdk.Duration.seconds(30),
       timeout: cdk.Duration.seconds(5),

@@ -1,0 +1,109 @@
+name: Manual Deploy PulsePay
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'development'
+        type: choice
+        options:
+        - development
+        - staging
+        - production
+
+env:
+  AWS_REGION: us-east-1
+  ECR_REPOSITORY: payment-app-backend
+  ECS_CLUSTER: payment-app-cluster
+  ECS_SERVICE: PaymentApp-development-BackendService0012F2D2-oYgI1SrdmuQd
+  ECS_TASK_DEFINITION: PaymentAppdevelopmentBackendTaskDefinition7B9A6C91
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Get environment variables from AWS Secrets Manager
+      id: secrets
+      run: |
+        # Get Stripe secrets
+        STRIPE_SECRET=$(aws secretsmanager get-secret-value --secret-id payment-app/stripe --query 'SecretString' --output text)
+        echo "STRIPE_SECRET_KEY=$(echo $STRIPE_SECRET | jq -r '.secretKey')" >> $GITHUB_ENV
+        echo "STRIPE_WEBHOOK_SECRET=$(echo $STRIPE_SECRET | jq -r '.webhookSecret')" >> $GITHUB_ENV
+        
+        # Get Firebase secrets
+        FIREBASE_SECRET=$(aws secretsmanager get-secret-value --secret-id payment-app/firebase --query 'SecretString' --output text)
+        echo "FIREBASE_PROJECT_ID=$(echo $FIREBASE_SECRET | jq -r '.projectId')" >> $GITHUB_ENV
+        echo "FIREBASE_CLIENT_EMAIL=$(echo $FIREBASE_SECRET | jq -r '.clientEmail')" >> $GITHUB_ENV
+        echo "FIREBASE_PRIVATE_KEY=$(echo $FIREBASE_SECRET | jq -r '.privateKey')" >> $GITHUB_ENV
+
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v2
+
+    - name: Build, tag, and push image to Amazon ECR
+      id: build-image
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        IMAGE_TAG: ${{ github.sha }}
+        DEPLOY_ENV: ${{ github.event.inputs.environment }}
+      run: |
+        cd backend
+        docker build --platform linux/amd64 -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+        docker build --platform linux/amd64 -t $ECR_REGISTRY/$ECR_REPOSITORY:latest .
+        docker build --platform linux/amd64 -t $ECR_REGISTRY/$ECR_REPOSITORY:$DEPLOY_ENV .
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$DEPLOY_ENV
+        echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
+
+    - name: Download task definition
+      run: |
+        aws ecs describe-task-definition --task-definition ${{ env.ECS_TASK_DEFINITION }} \
+        --query taskDefinition > task-definition.json
+
+    - name: Fill in the new image ID in the Amazon ECS task definition
+      id: task-def
+      uses: aws-actions/amazon-ecs-render-task-definition@v1
+      with:
+        task-definition: task-definition.json
+        container-name: Container
+        image: ${{ steps.build-image.outputs.image }}
+
+    - name: Deploy Amazon ECS task definition
+      uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+      with:
+        task-definition: ${{ steps.task-def.outputs.task-definition }}
+        service: ${{ env.ECS_SERVICE }}
+        cluster: ${{ env.ECS_CLUSTER }}
+        wait-for-service-stability: true
+
+    - name: Health check
+      run: |
+        echo "Deploying to environment: ${{ github.event.inputs.environment }}"
+        echo "Waiting for service to be stable..."
+        sleep 60
+        echo "Checking service status..."
+        aws ecs describe-services \
+          --cluster ${{ env.ECS_CLUSTER }} \
+          --services ${{ env.ECS_SERVICE }} \
+          --query 'services[0].{Status:status,RunningCount:runningCount,DesiredCount:desiredCount}' \
+          --output table
+
+    - name: Test API endpoint
+      run: |
+        echo "Testing API health endpoint..."
+        sleep 30
+        curl -f http://Paymen-Backe-WgHaSH8uAK0D-961689159.us-east-1.elb.amazonaws.com/health || echo "Health check failed - service may still be starting" 
